@@ -1,5 +1,5 @@
 var dog,sadDog,happyDog, database;
-var foodS,foodStock;
+var foodS, foodS2,foodStock;
 var addFood;
 var foodObj;
 var database;
@@ -7,10 +7,14 @@ var database;
 var feed, lastFed;
 var feedingButton;
 var r;
+var time;
+var hour;
+var lastFeedTime;
+var t;
 
 function preload(){
 sadDog=loadImage("Dog.png");
-happyDog=loadImage("happy dog.png");
+happyDog=loadImage("happy dog.gif");
 }
 
 function setup() {
@@ -23,8 +27,10 @@ function setup() {
   foodStock.on("value",readStock, showError);
   dog=createSprite(800,200,150,150);
   dog.addImage(sadDog);
-  dog.scale=0.15;
+  dog.scale=0.855;
 
+  lastFed = database.ref('feedTime');
+  lastFed.on('value', readFedTime, showError);
   //create feed the dog button here
 
   addFood=createButton("Add Food");
@@ -34,22 +40,34 @@ function setup() {
   feedingButton = createButton("Feed The Dog");
   feedingButton.position(700, 95);
   feedingButton.mousePressed(feedDog);
+  
+  lastFeedTime = hour();
 }
 
 function draw() {
-  background(46,139,87);
+  
+   background("WHITE");
   foodObj.display();
   push();
   textStyle(BOLD);
   fill("BLACK");
   text("FOOD STOCK: " + foodS, 20, 30);
   pop();
-  //write code to read fedtime value from the database 
-  
- 
-  //write code to display text lastFed time here
-
- 
+  if(hour<=12){
+    textSize(20);
+    fill("BLACK");
+    textStyle(BOLD);
+    text("Last Fed: 12 AM", 18, 388);
+  }
+   else if(hour>=12){
+     textSize(20);
+     fill("BLACK");
+     textStyle(BOLD);
+    text("Last Fed: 12 PM", 18, 388);
+   }
+   else{
+    text("Last Fed: 12 PM", 18, 388);
+   }
   drawSprites();
 }
 
@@ -57,21 +75,23 @@ function draw() {
 function readStock(data){
   foodS=data.val();
   console.log(foodS);
+  console.log(data);
   foodObj.updateFoodStock(foodS);
 }
-
 
 function feedDog(data){
   dog.addImage(happyDog);
   foodS = foodS-1;
-  console.log(foodS);
-}
+  database.ref('/').update({
+  Food:foodS
+  })
+} 
 
 //function to add food in stock
 function addFoods(){
   foodS++;
   database.ref('/').update({
-    Food:foodS
+  Food:foodS
   })
 }
  function showError(){
@@ -79,3 +99,16 @@ function addFoods(){
    textSize(40);
    text("Error occured while processing⚠⚠⚠", 500, 200);
  }
+  function readFedTime(data){
+    lastFed=data.val();
+    console.log("Previously Fed: " + lastFeedTime);
+    foodObj.getFedTime(lastFeedTime);
+  }
+
+  function updateFedTime(){
+    console.log("Hour: " + lastFeedTime);
+    t = lastFeedTime;
+    database.ref('/').update({
+      feedTime: t
+    })
+  }
